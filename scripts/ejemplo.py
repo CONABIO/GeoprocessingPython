@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 import argparse
 import geopandas as gpd
 import pandas as pd
@@ -6,7 +7,6 @@ import numpy as np
 
 COLUMNA_NOMBRE_REGION = 'country'
 COLUMNA_NOMBRE_ESPECIE = 'SCINAME'
-COLUMNA_AUX = 'SISID'
 
 
 def main(regiones, modelos_distribucion, out_counts, out_presenceabsence):
@@ -33,6 +33,7 @@ def main(regiones, modelos_distribucion, out_counts, out_presenceabsence):
 
     especies_x_region = gpd.sjoin(regiones_gdf, modelos_distribucion_gdf,
                                   how='inner', op='intersects')
+    especies_x_region['auxcol'] = 1
 
     agrupado_x_region = especies_x_region.groupby(by=COLUMNA_NOMBRE_REGION)
     agrupado_x_region.count()[COLUMNA_NOMBRE_ESPECIE].to_csv(out_counts)
@@ -40,10 +41,10 @@ def main(regiones, modelos_distribucion, out_counts, out_presenceabsence):
     pivote_regionespecies = pd.pivot_table(
         especies_x_region[[COLUMNA_NOMBRE_REGION,
                            COLUMNA_NOMBRE_ESPECIE,
-                           COLUMNA_AUX]].reset_index(drop=True),
+                           'auxcol']].reset_index(drop=True),
         index=COLUMNA_NOMBRE_REGION,
         columns=COLUMNA_NOMBRE_ESPECIE,
-        values=COLUMNA_AUX)
+        values='auxcol')
     pivote_regionespecies = pivote_regionespecies.applymap(
         lambda x: 0 if np.isnan(x) else 1)
     pivote_regionespecies.to_csv(out_presenceabsence)
